@@ -6,30 +6,46 @@
   <title>PDF.js Lazy Loading tanpa Spinner</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden; /* disable page scrolling */
+    }
+    .container,
+    .card {
+      height: 100%;
+    }
+    .card-body {
+      padding: 0;
+    }
     #pdf-container {
-      height: 75vh;
-      overflow: auto;
-      position: relative;
+      width: 80vw;       /* lebih kecil lebar */
+      height: 80vh;      /* lebih kecil tinggi */
+      margin: 0 auto;
+      overflow-y: auto;  /* scroll hanya pada PDF */
+      overflow-x: hidden;
     }
     canvas {
       display: block;
-      margin: 0 auto;
+      margin: 1rem auto;
+      max-width: 100%;
+      height: auto;
     }
   </style>
 </head>
 <body>
-  <div class="container my-5">
-    <div class="card shadow-sm">
+  <div class="container-fluid h-100 d-flex align-items-center justify-content-center">
+    <div class="card shadow-sm w-100 h-100">
       <div class="card-header bg-primary text-white">
-        <h3 class="mb-0">Presentasi Biogeografi</h3>
+        <h4 class="mb-0">Presentasi Biogeografi</h4>
       </div>
-      <div class="card-body position-relative">
-        <div id="pdf-container" class="border rounded p-2"></div>
+      <div class="card-body d-flex justify-content-center align-items-center">
+        <div id="pdf-container" class="border rounded"></div>
       </div>
-      <div class="card-footer d-flex justify-content-between">
-        <button id="prevBtn" class="btn btn-outline-primary" disabled>Previous</button>
-        <span>Halaman: <span id="page-num">1</span> / <span id="page-count">--</span></span>
-        <button id="nextBtn" class="btn btn-outline-primary" disabled>Next</button>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <button id="prevBtn" class="btn btn-outline-primary btn-sm" disabled>Previous</button>
+        <span class="small">Halaman: <span id="page-num">1</span> / <span id="page-count">--</span></span>
+        <button id="nextBtn" class="btn btn-outline-primary btn-sm" disabled>Next</button>
       </div>
     </div>
   </div>
@@ -43,7 +59,7 @@
 
     let pdfDoc = null;
     let pageNum = 1;
-    const scale = 1.5;
+    const scale = 1.2; // skala agak kecil agar PDF tidak terlalu besar
     const container = document.getElementById('pdf-container');
 
     const pageNumElem = document.getElementById('page-num');
@@ -51,7 +67,6 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    // Cache buat canvas halaman yang udah di-render
     const pageCache = {};
 
     function updateUI(num) {
@@ -62,25 +77,20 @@
 
     function renderPage(num) {
       if (pageCache[num]) {
-        // Kalau sudah ada di cache, tampilkan langsung
         container.innerHTML = '';
         container.appendChild(pageCache[num]);
         updateUI(num);
         return;
       }
-
       pdfDoc.getPage(num).then(page => {
         const viewport = page.getViewport({ scale });
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-
         container.innerHTML = '';
         container.appendChild(canvas);
-
         page.render({ canvasContext: context, viewport }).promise.then(() => {
-          // Simpan canvas ke cache
           pageCache[num] = canvas;
           updateUI(num);
         });
@@ -101,7 +111,6 @@
       pageNum--;
       renderPage(pageNum);
     });
-
     nextBtn.addEventListener('click', () => {
       if (pageNum >= pdfDoc.numPages) return;
       pageNum++;
